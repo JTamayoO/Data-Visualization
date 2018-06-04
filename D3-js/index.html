@@ -92,8 +92,9 @@ var bigText = g.append('text')
   .attr('y', 45);
 
 // Load map data
-d3.json('http://localhost:3001/json/data.json', function(error, mapData) {
+d3.json('https://raw.githubusercontent.com/JTamayoO/Test/master/D3JS.js/data.json', function(error, mapData) {
   var features = mapData.features;
+  console.log(features)
 
   // Update color scale domain based on data
   color.domain([0, d3.max(features, nameLength)]);

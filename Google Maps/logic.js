@@ -6,7 +6,7 @@ function initMap() {
   });
 
   // Load GeoJSON.
-  setTimeout(function(){ map.data.addGeoJson(data); }, 3000);
+  map.data.loadGeoJson('https://raw.githubusercontent.com/JTamayoO/Test/master/D3JS.js/data.json');
 
   // Color each letter gray. Change the color when the isColorful property
   // is set to true.
