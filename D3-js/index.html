@@ -41,8 +41,8 @@ text.big-text{
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script>
 
-var width = 960,
-    height = 500,
+var width = 2000,
+    height = 2000,
     centered;
 
 // Define color scale
@@ -52,7 +52,7 @@ var color = d3.scale.linear()
   .range(['#fff', '#409A99']);
 
 var projection = d3.geo.mercator()
-  .scale(1500)
+  .scale(500)
   // Center the Map in Colombia
   .center([-74, 4.5])
   .translate([width / 2, height / 2]);
@@ -92,7 +92,7 @@ var bigText = g.append('text')
   .attr('y', 45);
 
 // Load map data
-d3.json('https://raw.githubusercontent.com/JTamayoO/Test/master/Google%20Maps/UAn_DensUrbam_28052018.geojson', function(error, mapData) {
+d3.json('https://raw.githubusercontent.com/JTamayoO/Test/master/Google-Maps/URBAM.json', function(error, mapData) {
   var features = mapData.features;
   console.log(features)
 

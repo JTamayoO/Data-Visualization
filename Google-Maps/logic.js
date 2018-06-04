@@ -6,7 +6,7 @@ function initMap() {
   });
 
   // Load GeoJSON.
-  map.data.loadGeoJson('https://raw.githubusercontent.com/JTamayoO/Test/master/Google%20Maps/UAn_DensUrbam_28052018.geojson');
+  map.data.loadGeoJson('https://raw.githubusercontent.com/JTamayoO/Test/master/Google-Maps/URBAM.json');
 
   // Color each letter gray. Change the color when the isColorful property
   // is set to true.
