@@ -1,293 +1,82 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-
 <style>
 
-@import url(https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Josefin+Slab|Arvo|Lato|Vollkorn|Abril+Fatface|Old+Standard+TT|Droid+Sans|Lobster|Inconsolata|Montserrat|Playfair+Display|Karla|Alegreya|Libre+Baskerville|Merriweather|Lora|Archivo+Narrow|Neuton|Signika|Questrial|Fjalla+One|Bitter|Varela+Round);
-
-.background {
-  fill: #eee;
-  pointer-events: all;
+body {
+  font: 12px sans-serif;
 }
 
-.map-layer {
-  fill: #fff;
-  stroke: #aaa;
+path {
+  stroke-width: 1px;
+  stroke: white;
+  fill: steelblue;
+  cursor: pointer;
 }
 
-.effect-layer{
-  pointer-events:none;
-}
-
-text{
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 300;
-}
-
-text.big-text{
-  font-size: 30px;
-  font-weight: 400;
-}
-
-.effect-layer text, text.dummy-text{
-  font-size: 12px;
+path:hover, path.highlighted {
+  fill: tomato;
 }
 
 </style>
 <body>
-
-<svg></svg>
-
-<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
 
-var width = 2000,
-    height = 2000,
-    centered;
+//Map dimensions (in pixels)
+var width = 556,
+    height = 600;
 
-// Define color scale
-var color = d3.scale.linear()
-  .domain([1, 20])
-  .clamp(true)
-  .range(['#fff', '#409A99']);
-
+//Map projection
 var projection = d3.geo.mercator()
-  .scale(500)
-  // Center the Map in Colombia
-  .center([-74, 4.5])
-  .translate([width / 2, height / 2]);
+    .scale(60863.14342566806)
+    .center([-75.4706248025062,6.24591229737012]) //projection center
+    .translate([width/2,height/2]) //translate to center the map in view
 
+//Generate paths based on projection
 var path = d3.geo.path()
-  .projection(projection);
+    .projection(projection);
 
-// Set svg width & height
-var svg = d3.select('svg')
-  .attr('width', width)
-  .attr('height', height);
+//Create an SVG
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
 
-// Add background
-svg.append('rect')
-  .attr('class', 'background')
-  .attr('width', width)
-  .attr('height', height)
-  .on('click', clicked);
+//Group for the map features
+var features = svg.append("g")
+    .attr("class","features");
 
-var g = svg.append('g');
+//Create zoom/pan listener
+//Change [1,Infinity] to adjust the min/max zoom scale
+var zoom = d3.behavior.zoom()
+    .scaleExtent([1, Infinity])
+    .on("zoom",zoomed);
 
-var effectLayer = g.append('g')
-  .classed('effect-layer', true);
+svg.call(zoom);
 
-var mapLayer = g.append('g')
-  .classed('map-layer', true);
+d3.json("https://raw.githubusercontent.com/JTamayoO/Test/master/D3-js/data.json",function(error,geodata) {
+  if (error) return console.log(error); //unknown error, check the console
 
-var dummyText = g.append('text')
-  .classed('dummy-text', true)
-  .attr('x', 10)
-  .attr('y', 30)
-  .style('opacity', 0);
+  //Create a path for each map feature in the data
+  features.selectAll("path")
+    .data(geodata.features)
+    .enter()
+    .append("path")
+    .attr("d",path)
+    .on("click",clicked);
 
-var bigText = g.append('text')
-  .classed('big-text', true)
-  .attr('x', 20)
-  .attr('y', 45);
-
-// Load map data
-d3.json('https://raw.githubusercontent.com/JTamayoO/Test/master/Google-Maps/URBAM.json', function(error, mapData) {
-  var features = mapData.features;
-  console.log(features)
-
-  // Update color scale domain based on data
-  color.domain([0, d3.max(features, nameLength)]);
-
-  // Draw each province as a path
-  mapLayer.selectAll('path')
-      .data(features)
-    .enter().append('path')
-      .attr('d', path)
-      .attr('vector-effect', 'non-scaling-stroke')
-      .style('fill', fillFn)
-      .on('mouseover', mouseover)
-      .on('mouseout', mouseout)
-      .on('click', clicked);
 });
 
-// Get province name
-function nameFn(d){
-  return d && d.properties ? d.properties.NOMBRE_DPT : null;
+// Add optional onClick events for features here
+// d.properties contains the attributes (e.g. d.properties.name, d.properties.population)
+function clicked(d,i) {
+
 }
 
-// Get province name length
-function nameLength(d){
-  var n = nameFn(d);
-  return n ? n.length : 0;
-}
 
-// Get province color
-function fillFn(d){
-  return color(nameLength(d));
-}
-
-// When clicked, zoom in
-function clicked(d) {
-  var x, y, k;
-
-  // Compute centroid of the selected path
-  if (d && centered !== d) {
-    var centroid = path.centroid(d);
-    x = centroid[0];
-    y = centroid[1];
-    k = 4;
-    centered = d;
-  } else {
-    x = width / 2;
-    y = height / 2;
-    k = 1;
-    centered = null;
-  }
-
-  // Highlight the clicked province
-  mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
-
-  // Zoom
-  g.transition()
-    .duration(750)
-    .attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')');
-}
-
-function mouseover(d){
-  // Highlight hovered province
-  d3.select(this).style('fill', 'orange');
-
-  // Draw effects
-  textArt(nameFn(d));
-}
-
-function mouseout(d){
-  // Reset province color
-  mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
-
-  // Remove effect text
-  effectLayer.selectAll('text').transition()
-    .style('opacity', 0)
-    .remove();
-
-  // Clear province name
-  bigText.text('');
-}
-
-// Gimmick
-// Just me playing around.
-// You won't need this for a regular map.
-
-var BASE_FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-
-var FONTS = [
-  "Open Sans",
-  "Josefin Slab",
-  "Arvo",
-  "Lato",
-  "Vollkorn",
-  "Abril Fatface",
-  "Old StandardTT",
-  "Droid+Sans",
-  "Lobster",
-  "Inconsolata",
-  "Montserrat",
-  "Playfair Display",
-  "Karla",
-  "Alegreya",
-  "Libre Baskerville",
-  "Merriweather",
-  "Lora",
-  "Archivo Narrow",
-  "Neuton",
-  "Signika",
-  "Questrial",
-  "Fjalla One",
-  "Bitter",
-  "Varela Round"
-];
-
-function textArt(text){
-  // Use random font
-  var fontIndex = Math.round(Math.random() * FONTS.length);
-  var fontFamily = FONTS[fontIndex] + ', ' + BASE_FONT;
-
-  bigText
-    .style('font-family', fontFamily)
-    .text(text);
-
-  // Use dummy text to compute actual width of the text
-  // getBBox() will return bounding box
-  dummyText
-    .style('font-family', fontFamily)
-    .text(text);
-  var bbox = dummyText.node().getBBox();
-
-  var textWidth = bbox.width;
-  var textHeight = bbox.height;
-  var xGap = 3;
-  var yGap = 1;
-
-  // Generate the positions of the text in the background
-  var xPtr = 0;
-  var yPtr = 0;
-  var positions = [];
-  var rowCount = 0;
-  while(yPtr < height){
-    while(xPtr < width){
-      var point = {
-        text: text,
-        index: positions.length,
-        x: xPtr,
-        y: yPtr
-      };
-      var dx = point.x - width/2 + textWidth/2;
-      var dy = point.y - height/2;
-      point.distance = dx*dx + dy*dy;
-
-      positions.push(point);
-      xPtr += textWidth + xGap;
-    }
-    rowCount++;
-    xPtr = rowCount%2===0 ? 0 : -textWidth/2;
-    xPtr += Math.random() * 10;
-    yPtr += textHeight + yGap;
-  }
-
-  var selection = effectLayer.selectAll('text')
-    .data(positions, function(d){return d.text+'/'+d.index;});
-
-  // Clear old ones
-  selection.exit().transition()
-    .style('opacity', 0)
-    .remove();
-
-  // Create text but set opacity to 0
-  selection.enter().append('text')
-    .text(function(d){return d.text;})
-    .attr('x', function(d){return d.x;})
-    .attr('y', function(d){return d.y;})
-    .style('font-family', fontFamily)
-    .style('fill', '#777')
-    .style('opacity', 0);
-
-  selection
-    .style('font-family', fontFamily)
-    .attr('x', function(d){return d.x;})
-    .attr('y', function(d){return d.y;});
-
-  // Create transtion to increase opacity from 0 to 0.1-0.5
-  // Add delay based on distance from the center of the <svg> and a bit more randomness.
-  selection.transition()
-    .delay(function(d){
-      return d.distance * 0.01 + Math.random()*1000;
-    })
-    .style('opacity', function(d){
-      return 0.1 + Math.random()*0.4;
-    });
+//Update map on zoom/pan
+function zoomed() {
+  features.attr("transform", "translate(" + zoom.translate() + ")scale(" + zoom.scale() + ")")
+      .selectAll("path").style("stroke-width", 1 / zoom.scale() + "px" );
 }
 
 </script>

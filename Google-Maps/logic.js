@@ -6,7 +6,7 @@ function initMap() {
   });
 
   // Load GeoJSON.
-  map.data.loadGeoJson('https://raw.githubusercontent.com/JTamayoO/Test/master/Google-Maps/URBAM.json');
+  map.data.loadGeoJson('https://raw.githubusercontent.com/JTamayoO/Test/master/D3-js/data.json');
 
   // Color each letter gray. Change the color when the isColorful property
   // is set to true.
